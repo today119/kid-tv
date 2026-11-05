@@ -262,7 +262,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106h';
+const APPVER='20261106j';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -292,8 +292,8 @@ async function loadAll(){
 
 /* ── 영상 목록 ── */
 const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
-const onlyRe=c=>{if(!c||!c.only)return null;try{return new RegExp(c.only,'i')}catch(e){return null}};
-function allVids(){const out=[];for(const [cid,c] of chOn()){const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
+const onlyRe=c=>{if(!c||(!c.only&&!c.ex))return null;try{const a=c.only?new RegExp(c.only,'i'):null,b=c.ex?new RegExp(c.ex,'i'):null;return {test:t=>(!a||a.test(t))&&(!b||!b.test(t))}}catch(e){return null}};
+function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
 function allShorts(){if(S.D.cfg.noShorts)return [];const out=[];for(const [cid,c] of chOn()){if(c.noS)continue;(S.V[cid]?.s||[]).forEach((x,i)=>{if(!S.D.hide[x[0]])out.push({id:x[0],t:x[1],vw:x[2],c:cid,i,s:1})})}return out}
 function findVid(id){for(const [cid] of Object.entries(S.D.ch)){const a=S.V[cid];if(!a)continue;let x=a.v.find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],vw:x[3],c:cid};x=a.s.find(y=>y[0]===id);if(x)return{id,t:x[1],vw:x[2],c:cid,s:1}}
   for(const [cid] of Object.entries(S.D.ch)){for(const pl of S.V[cid]?.p||[]){const x=pl[2].find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],c:cid}}}return null}
@@ -308,7 +308,8 @@ function seeded(arr,seed){let s=seed;const r=()=>(s=(s*1103515245+12345)&0x7ffff
 function topics(){const out=[];for(const [cid,c] of chOn()){if(c.noTp)continue;const t=S.T[cid];if(!t||!t.topics)continue;for(const x of t.topics){if(!out.some(o=>o.n===x.n))out.push({n:x.n,e:x.e,k:x.k})}}
   const cnt=n=>allVids().filter(v=>inTopic(v,n)).length;return out.filter(o=>cnt(o.n)).sort((a,b)=>(a.k==='etc')-(b.k==='etc'))}
 function inTopic(v,n){const t=S.T[v.c];if(!t||!t.m)return false;const ks=(t.m[v.id]||'').split(',');return t.topics.some(x=>x.n===n&&ks.includes(x.k))}
-function homeList(){const all=allVids();if(S.chip.startsWith('t:')){const n=S.chip.slice(2);const a=all.filter(v=>inTopic(v,n)).map(v=>({...v,ep:epNo(v.t)}));
+function chips4ch(chs){const out=[],seen={};for(const [k] of chs){const n=chN(k);const grp=chs.filter(([j])=>chN(j)===n).length>1;if(grp){if(!seen[n]){seen[n]=1;out.push(['g:'+n,n])}}else out.push(['c:'+k,n])}return out}
+function homeList(){const all=allVids();if(S.chip.startsWith('g:')){const n=S.chip.slice(2);return all.filter(v=>chN(v.c)===n).sort((a,b)=>(b.vw||0)-(a.vw||0))}if(S.chip.startsWith('t:')){const n=S.chip.slice(2);const a=all.filter(v=>inTopic(v,n)).map(v=>({...v,ep:epNo(v.t)}));
     return [...a.filter(v=>v.ep!==null).sort((x,y)=>x.ep-y.ep),...a.filter(v=>v.ep===null).sort((x,y)=>x.i-y.i)]}if(S.chip==='new')return all.slice().sort((a,b)=>a.i-b.i);if(S.chip.startsWith('c:'))return all.filter(v=>v.c===S.chip.slice(2));
   const seed=+today()+(S.pid==='p2'?7:0)+(S.reseed||0);const fresh=all.filter(v=>v.i<12),rest=all.filter(v=>v.i>=12);return [...seeded(fresh,seed),...seeded(rest,seed+1)].sort((a,b)=>(S.D.hist[a.id]?1:0)-(S.D.hist[b.id]?1:0))}
 const fmtD=s=>{s=Math.round(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
@@ -328,9 +329,10 @@ function render(){
   meBtn();bell();$('#nav [data-t="shorts"]').classList.toggle('hide',!!S.D.cfg.noShorts);
   const chs=chOn();$('#chips').classList.toggle('hide',S.tab!=='home');
   const hasPl=chs.some(([k,c])=>!c.only&&(S.V[k]?.p||[]).length);
-  if(S.tab==='home')$('#chips').innerHTML=[['all','전체'],...topics().map(t=>['t:'+t.n,(t.e?t.e+' ':'')+t.n]),['new','최신'],...(hasPl?[['pls','📋 재생목록']]:[]),...chs.map(([k])=>['c:'+k,chN(k)])].map(([k,n])=>`<button class="chip ${S.chip===k?'on':''}" data-c="${esc(k)}">${esc(n)}</button>`).join('');
-  const on=$('#chips .chip.on');if(on&&on.dataset.c!=='all')on.scrollIntoView({inline:'center',block:'nearest'});
-  $$('#chips [data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c==='pls'){go({tab:'pls'});return}if(c.startsWith('c:')){go({tab:'ch',cid:c.slice(2),ctab:'v'});return}S.chip=c;S.shown=0;render();scrollTo(0,0)});
+  const langs=[...new Set(chs.map(([k,c])=>c.lang).filter(Boolean))];
+  if(S.tab==='home')$('#chips').innerHTML=(langs.length>1?[['L:ko','🇰🇷 한국어'],['L:en','🇺🇸 영어']].map(([k,n])=>`<button class="chip ${S.lang===k.slice(2)?'on':''}" data-c="${k}" style="${S.lang===k.slice(2)?'background:#065fd4;color:#fff':''}">${n}</button>`).join('')+'<span style="flex:none;width:1px;background:var(--line);margin:4px 2px"></span>':'')+[['all','전체'],...topics().map(t=>['t:'+t.n,(t.e?t.e+' ':'')+t.n]),['new','최신'],...(hasPl?[['pls','📋 재생목록']]:[]),...chips4ch(chs)].map(([k,n])=>`<button class="chip ${S.chip===k?'on':''}" data-c="${esc(k)}">${esc(n)}</button>`).join('');
+  const on=$$('#chips .chip.on').filter(e=>!e.dataset.c.startsWith('L:'))[0];if(on&&on.dataset.c!=='all')on.scrollIntoView({inline:'center',block:'nearest'});
+  $$('#chips [data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c.startsWith('L:')){const l=c.slice(2);S.lang=S.lang===l?'':l;L.lang=S.lang;saveL();S.shown=0;render();return}if(c==='pls'){go({tab:'pls'});return}if(c.startsWith('c:')){go({tab:'ch',cid:c.slice(2),ctab:'v'});return}S.chip=c;S.shown=0;render();scrollTo(0,0)});
   const m=$('#m');
   if(!chs.length){m.innerHTML='<div class="empty">아직 볼 수 있는 채널이 없어요.<br>오른쪽 위 동그라미 → ⚙️ 부모 설정에서 채널을 넣어 주세요.</div>';return}
   if(S.tab==='home'){S.list=homeList();S.shown=Math.max(S.shown,10);
@@ -579,7 +581,7 @@ async function setup(){document.body.insertAdjacentHTML('beforeend',`<div class=
 async function init(){const h=new URLSearchParams(location.hash.slice(1));const f=h.get('f');if(f&&/^[a-z0-9]{10,16}$/.test(f)){if(L.fam!==f){L={fam:f};saveL()}}
   S.fam=L.fam||'';if(!S.fam)return setup();if(!f)history.replaceState(null,'',location.pathname+'#f='+S.fam);
   if(L.cache){S.D.cfg=L.cache.cfg||{};S.D.ch=L.cache.ch||{};S.D.hide=L.cache.hide||{};for(const cid of Object.keys(S.D.ch)){try{S.V[cid]=JSON.parse(localStorage.getItem('kid_tv_vid_'+cid)||'null')||{v:[],s:[]};S.T[cid]=JSON.parse(localStorage.getItem('kid_tv_tp_'+cid)||'null')}catch(e){}}}
-  S.pid=L.pid&&S.D.cfg.prof?.[L.pid]?L.pid:'';
+  S.pid=L.pid&&S.D.cfg.prof?.[L.pid]?L.pid:'';S.lang=L.lang||'';
   try{await loadAll()}catch(e){if(!L.cache)return toast('인터넷 연결을 확인해 주세요')}
   S.pid=L.pid&&S.D.cfg.prof?.[L.pid]?L.pid:'';
   if(!S.pid)return whoScreen();
