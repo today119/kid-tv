@@ -262,7 +262,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106e';
+const APPVER='20261106f';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -407,7 +407,7 @@ function limTxt(){const lm=limMin();const u=Math.floor((+(S.D.log[S.pid])||0)/60
 function tick(){const t=now();const playing=(P.w&&P.w.st===1)||(P.s&&P.s.st===1);if(playing&&lastTick){const dt=Math.min(5,(t-lastTick)/1000);S.D.log[S.pid]=(+(S.D.log[S.pid])||0)+dt;
     if(t-lastSave>15000){lastSave=t;put('log/'+today()+'/'+S.pid,Math.round(S.D.log[S.pid]))}checkLimit()}lastTick=t}
 setInterval(tick,1000);
-function checkLimit(){const lm=limMin();if(!lm||!S.pid)return false;if((+(S.D.log[S.pid])||0)>=lm*60){stopAll();showLock();return true}return false}
+function checkLimit(){const lm=limMin();if(!lm||!S.pid)return false;if((+(S.D.log[S.pid])||0)>=lm*60){stopAll();exitFs();showLock();return true}return false}
 function showLock(){const p=prof();const el=$('#tlock');el.innerHTML=`<div class="big">🌙</div><h2>${esc(p.n||'')}, 오늘은 여기까지!</h2><p>오늘 볼 수 있는 시간을 다 썼어요.<br>눈을 쉬게 해 주고 내일 또 만나요 👋</p><button id="tlA">👨‍👩‍👧 부모님이 시간 더 주기</button><button id="tlP">다른 사람으로 보기</button>`;el.classList.add('on');
   $('#tlP').onclick=()=>{el.classList.remove('on');whoScreen()};
   $('#tlA').onclick=()=>pinGate(()=>{sheet(`<h3>시간 더 주기</h3>${[15,30,60].map(n=>`<button class="mi" data-x="${n}">⏱️ ${n}분 더</button>`).join('')}`);
