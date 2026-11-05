@@ -262,7 +262,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106f';
+const APPVER='20261106g';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -328,6 +328,7 @@ function render(){
   const chs=chOn();$('#chips').classList.toggle('hide',S.tab!=='home');
   const hasPl=chs.some(([k])=>(S.V[k]?.p||[]).length);
   if(S.tab==='home')$('#chips').innerHTML=[['all','전체'],...topics().map(t=>['t:'+t.n,(t.e?t.e+' ':'')+t.n]),['new','최신'],...(hasPl?[['pls','📋 재생목록']]:[]),...chs.map(([k])=>['c:'+k,chN(k)])].map(([k,n])=>`<button class="chip ${S.chip===k?'on':''}" data-c="${esc(k)}">${esc(n)}</button>`).join('');
+  const on=$('#chips .chip.on');if(on&&on.dataset.c!=='all')on.scrollIntoView({inline:'center',block:'nearest'});
   $$('#chips [data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c==='pls'){go({tab:'pls'});return}if(c.startsWith('c:')){go({tab:'ch',cid:c.slice(2),ctab:'v'});return}S.chip=c;S.shown=0;render();scrollTo(0,0)});
   const m=$('#m');
   if(!chs.length){m.innerHTML='<div class="empty">아직 볼 수 있는 채널이 없어요.<br>오른쪽 위 동그라미 → ⚙️ 부모 설정에서 채널을 넣어 주세요.</div>';return}
