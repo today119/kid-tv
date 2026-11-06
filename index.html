@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106r';
+const APPVER='20261106s';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -406,9 +406,9 @@ function whoScreen(){const d=document.createElement('div');d.className='who';d.i
   document.body.appendChild(d);d.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{if(S.D.cfg.prof[b.dataset.p]?.yt)return ytGate(d,S.D.cfg.prof[b.dataset.p]);S.pid=b.dataset.p;L.pid=S.pid;saveL();d.remove();await loadAll();markSeen();render();checkLimit()})}
 $('#meB').onclick=()=>{const p=prof();sheet(`<div class="mi" style="pointer-events:none"><div class="pav" style="background:${esc(p.c||'#888')}">${esc(ini(p))}</div><div><b>${esc(p.n||'')}</b><div class="sb">${limTxt()}</div></div></div>
   <div style="border-top:1px solid var(--line);margin:6px 0"></div>
-  <button class="mi" id="swP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.8-3.5 3.2-5.5 6-5.5s5.2 2 6 5.5M16 6h5m-2-2 2 2-2 2M21 14h-5m2-2-2 2 2 2"/></svg>계정 바꾸기</button>
+  <button class="mi" id="swP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.8-3.5 3.2-5.5 6-5.5s5.2 2 6 5.5M16 6h5m-2-2 2 2-2 2M21 14h-5m2-2-2 2 2 2"/></svg>계정 바꾸기 (부모 비밀번호)</button>
   <button class="mi" id="admB"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>부모 설정<span class="x">비밀번호</span></button>`);
-  $('#swP').onclick=()=>{closeSheet();stopAll();whoScreen()};$('#admB').onclick=()=>{closeSheet();pinGate(openAdmin)}};
+  $('#swP').onclick=()=>{closeSheet();stopAll();pinGate(whoScreen)};$('#admB').onclick=()=>{closeSheet();pinGate(openAdmin)}};
 
 /* ── 시청 시간 ── */
 let used=0,lastTick=0,lastSave=0;
@@ -418,8 +418,8 @@ function tick(){const t=now();const playing=(P.w&&P.w.st===1)||(P.s&&P.s.st===1)
     if(t-lastSave>15000){lastSave=t;put('log/'+today()+'/'+S.pid,Math.round(S.D.log[S.pid]))}checkLimit()}lastTick=t}
 setInterval(tick,1000);
 function checkLimit(){const lm=limMin();if(!lm||!S.pid)return false;if((+(S.D.log[S.pid])||0)>=lm*60){stopAll();exitFs();showLock();return true}return false}
-function showLock(){const p=prof();const el=$('#tlock');el.innerHTML=`<div class="big">🌙</div><h2>${esc(p.n||'')}, 오늘은 여기까지!</h2><p>오늘 볼 수 있는 시간을 다 썼어요.<br>눈을 쉬게 해 주고 내일 또 만나요 👋</p><button id="tlA">👨‍👩‍👧 부모님이 시간 더 주기</button><button id="tlP">다른 사람으로 보기</button>`;el.classList.add('on');
-  $('#tlP').onclick=()=>{el.classList.remove('on');whoScreen()};
+function showLock(){const p=prof();const el=$('#tlock');el.innerHTML=`<div class="big">🌙</div><h2>${esc(p.n||'')}, 오늘은 여기까지!</h2><p>오늘 볼 수 있는 시간을 다 썼어요.<br>눈을 쉬게 해 주고 내일 또 만나요 👋</p><button id="tlA">👨‍👩‍👧 부모님이 시간 더 주기</button>`;el.classList.add('on');
+
   $('#tlA').onclick=()=>pinGate(()=>{sheet(`<h3>시간 더 주기</h3>${[15,30,60].map(n=>`<button class="mi" data-x="${n}">⏱️ ${n}분 더</button>`).join('')}`);
     $$('#sheet [data-x]').forEach(b=>b.onclick=()=>{const x=(+(S.D.log[S.pid+'_x'])||0)+(+b.dataset.x);S.D.log[S.pid+'_x']=x;put('log/'+today()+'/'+S.pid+'_x',x);closeSheet();el.classList.remove('on');toast(b.dataset.x+'분 더 볼 수 있어요')})})}
 
