@@ -199,6 +199,10 @@ main{padding-bottom:calc(60px + var(--sab))}
 .pin .msg{min-height:20px;font-size:14px;color:#e03131}
 .toast{position:fixed;left:50%;bottom:calc(70px + var(--sab));transform:translateX(-50%);z-index:99;background:#323232;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
 .toast.on{opacity:1}
+.tlk{position:fixed;inset:0;z-index:84;display:none;touch-action:none;-webkit-user-select:none;user-select:none}.tlk.on{display:block}
+.tlk .tb{position:absolute;top:calc(8px + var(--sat));right:10px;width:46px;height:46px;border-radius:50%;background:#0006;color:#fff;font-size:22px;display:grid;place-items:center}
+.tlk .tb i{position:absolute;inset:-4px;border-radius:50%;border:4px solid #fff;clip-path:inset(0 100% 0 0);transition:none}.tlk .tb.hold i{clip-path:inset(0 0 0 0);transition:clip-path 3s linear}
+.tlk .hn{position:absolute;left:50%;bottom:30%;transform:translateX(-50%);background:#000a;color:#fff;padding:10px 16px;border-radius:20px;font-size:15px;opacity:0;transition:opacity .3s;white-space:nowrap}.tlk .hn.on{opacity:1}
 .tlock{position:fixed;inset:0;z-index:85;background:linear-gradient(#1c2541,#3a506b);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px}
 .tlock.on{display:flex}
 .tlock .big{font-size:64px}
@@ -259,11 +263,12 @@ main{padding-bottom:calc(60px + var(--sab))}
 
 <div class="dim" id="dim"><div class="sheet" id="sheet"></div></div>
 <div class="adm" id="adm"></div>
+<div class="tlk" id="tlk"><div class="tb" id="tlkB">🔒<i></i></div><div class="hn" id="tlkH">🔒 화면이 잠겨 있어요</div></div>
 <div class="tlock" id="tlock"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106p';
+const APPVER='20261106q';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -435,12 +440,19 @@ async function playId(o,id,poster){o.vid=id;o.frz=0;o.lastT=-1;o.box.classList.r
 function toggle(o){if(!o.yt)return;if(o.st===1||o.st===3)o.yt.pauseVideo();else{if(checkLimit())return;o.yt.playVideo()}}
 /* 광고 중엔 유튜브 화면을 직접 누를 수 있게(건너뛰기 등) — 광고 동안은 본 영상 시간이 멈춰 있음 */
 setInterval(()=>{for(const k of ['w','s']){const o=P[k];if(!o||!o.yt||!o.started||!o.yt.getCurrentTime)continue;let t;try{t=o.yt.getCurrentTime()}catch(e){continue}
-  if(o.st===1&&t-(o.lastT??-1)>0.05&&t>0.3){o.frz=0;o.box.classList.remove('ad')}else if(o.st===1||o.st===3){o.frz=(o.frz||0)+1;if(o.frz>=2)o.box.classList.add('ad')}else{o.frz=0;o.box.classList.remove('ad')}o.lastT=t}},500);
+  if(o.st===1&&t-(o.lastT??-1)>0.05&&t>0.3){o.frz=0;o.box.classList.remove('ad');if(k==='w'&&prof().tl&&!S.tlOff)$('#tlk').classList.add('on')}else if(o.st===1||o.st===3){o.frz=(o.frz||0)+1;if(o.frz>=2)o.box.classList.add('ad')}else{o.frz=0;o.box.classList.remove('ad')}o.lastT=t}},500);
+/* 터치 잠금(프로필별): 본 영상이 흐르기 시작하면 화면 전체를 막고, 🔒 3초 누르기로만 풀림 */
+setInterval(()=>{if(!$('#watch').classList.contains('on'))$('#tlk').classList.remove('on')},500);
+{let ht,hn;const b=$('#tlkB'),z=$('#tlk');
+  z.addEventListener('pointerdown',e=>{if(e.target.closest('#tlkB'))return;$('#tlkH').classList.add('on');clearTimeout(hn);hn=setTimeout(()=>$('#tlkH').classList.remove('on'),1500)});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('hold');clearTimeout(ht);ht=setTimeout(()=>{b.classList.remove('hold');z.classList.remove('on');S.tlOff=true;toast('🔓 잠금을 풀었어요')},3000)});
+  for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>{clearTimeout(ht);b.classList.remove('hold')});
+  z.addEventListener('contextmenu',e=>e.preventDefault())}
 function stopAll(){for(const k of ['w','s'])if(P[k]&&P[k].yt&&P[k].yt.pauseVideo)try{P[k].yt.pauseVideo()}catch(e){}}
 
 /* 재생 화면 */
 let cur=null,hideT,endT;
-function openWatch(id,pl){const v=findVid(id);if(!v)return;if(checkLimit())return;if(pl){v.c=pl.cid;v.pl=pl}cur=v;
+function openWatch(id,pl){const v=findVid(id);if(!v)return;if(checkLimit())return;S.tlOff=false;if(pl){v.c=pl.cid;v.pl=pl}cur=v;
   if(!$('#watch').classList.contains('on'))history.pushState({v:1,watch:1,tab:S.tab,cid:S.cid,pi:S.pi,ctab:S.ctab,from:S.from},'');
   if(!P.w)P.w=makePlayer('w','yt',$('#pbox'),{ended:(err)=>showEnd(err)});
   $('#watch').classList.add('on');document.body.style.overflow='hidden';$('#wbody').scrollTop=0;
@@ -549,7 +561,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
    <div class="note" style="margin-top:6px">${topics().map(t=>esc((t.e||'')+t.n)+' '+allVids().filter(v=>inTopic(v,t.n)).length).join(' · ')||'아직 안 나눴어요'}</div></div>
   <div class="box"><h4>👧 보는 사람 · 하루 시간</h4>
    ${profs().map(([k,p])=>{const u=Math.floor((+lg[k]||0)/60);return `<div class="crow" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="pav" style="width:36px;height:36px;background:${esc(p.c)}">${esc(ini(p))}</div><b style="flex:1">${esc(p.n)}</b><span class="note">오늘 ${u}분${lg[k+'_x']?` (+${lg[k+'_x']}분 더 줌)`:''}</span><button class="sbtn" data-rn="${k}">이름</button>${profs().length>1?`<button class="sbtn r" data-pd="${k}">빼기</button>`:''}</div>
-     <div class="lim">${[0,30,45,60,90,120].map(n=>`<button class="${(+p.lim||0)===n?'on':''}" data-lim="${k}:${n}">${n?n+'분':'제한 없음'}</button>`).join('')}</div></div>`}).join('')}
+     <div class="lim">${[0,30,45,60,90,120].map(n=>`<button class="${(+p.lim||0)===n?'on':''}" data-lim="${k}:${n}">${n?n+'분':'제한 없음'}</button>`).join('')}<button class="${p.tl?'on':''}" data-tl="${k}">${p.tl?'🔒 터치 잠금':'터치 잠금 끔'}</button></div></div>`}).join('')}
    <div style="margin-top:10px"><button class="sbtn" id="pAdd">＋ 보는 사람 더하기</button></div></div>
   <div class="box"><h4>🚫 숨긴 영상 ${hidden.length}개</h4><div class="note">영상 화면에서 부모 설정을 연 뒤 10분 동안 「이 영상 숨기기」 버튼이 보여요.</div>
    ${hidden.map(v=>`<div class="crow"><img src="${thU(v.id)}" style="width:80px;aspect-ratio:16/9;object-fit:cover;border-radius:6px" alt=""><div class="tx"><b>${esc(v.t)}</b></div><button class="sbtn" data-uh="${esc(v.id)}">다시 보이기</button></div>`).join('')}</div>
@@ -571,6 +583,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
     $$('[data-add]').forEach(b=>b.onclick=()=>addCh(b.dataset.add))};
   $('#chGo').onclick=go;$('#chQ').onkeydown=e=>{if(e.key==='Enter')go()};
   $('#rfB').onclick=async()=>{toast('새 영상을 불러오는 중… 1~2분 걸려요');await waitReq(ask('refresh'));setTimeout(async()=>{await loadAll();drawAdmin();toast('새로 불러왔어요')},60000)};
+  $$('[data-tl]').forEach(b=>b.onclick=()=>{const k=b.dataset.tl;const v=S.D.cfg.prof[k].tl?null:1;S.D.cfg.prof[k].tl=v;put('cfg/prof/'+k+'/tl',v);drawAdmin()});
   $$('[data-lim]').forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.lim.split(':');S.D.cfg.prof[k].lim=+n;put('cfg/prof/'+k+'/lim',+n);drawAdmin()});
   $$('[data-rn]').forEach(b=>b.onclick=()=>{const k=b.dataset.rn;const n=prompt('이름',S.D.cfg.prof[k].n);if(n&&n.trim()){S.D.cfg.prof[k].n=n.trim();put('cfg/prof/'+k+'/n',n.trim());drawAdmin()}});
   $$('[data-pd]').forEach(b=>b.onclick=()=>{const k=b.dataset.pd;delete S.D.cfg.prof[k];put('cfg/prof/'+k,null);if(S.pid===k){S.pid='';L.pid='';saveL()}drawAdmin()});
