@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106s';
+const APPVER='20261106t';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -297,7 +297,7 @@ async function loadAll(){
   L.cache={cfg:S.D.cfg,ch:S.D.ch,hide:S.D.hide};saveL()}
 
 /* ── 영상 목록 ── */
-const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
+const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off&&(!c.who||c.who.split(',').includes(S.pid))).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
 const onlyRe=c=>{if(!c||(!c.only&&!c.ex))return null;try{const a=c.only?new RegExp(c.only,'i'):null,b=c.ex?new RegExp(c.ex,'i'):null;return {test:t=>(!a||a.test(t))&&(!b||!b.test(t))}}catch(e){return null}};
 function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
 function allShorts(){if(S.D.cfg.noShorts)return [];const out=[];for(const [cid,c] of chOn()){if(c.noS)continue;(S.V[cid]?.s||[]).forEach((x,i)=>{if(!S.D.hide[x[0]])out.push({id:x[0],t:x[1],vw:x[2],c:cid,i,s:1})})}return out}
@@ -550,7 +550,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
   <div class="box"><h4>📺 볼 수 있는 채널</h4>
    ${chs.length?chs.map(([k,c])=>`<div class="crow"><img class="av" src="${esc(avU(c.av))}" alt=""><div class="tx"><b>${esc(c.n)}</b><span class="note">영상 ${c.only?allVids().filter(v=>v.c===k).length+'/':''}${c.nv||0}${c.off?' · 잠시 끔':''}${c.nn?' · 「'+esc(c.nn)+'」':''}</span>
      <button class="sbtn" style="margin-top:4px;padding:4px 10px;font-size:12px" data-only="${k}">🔎 ${c.only?'거름: '+esc(c.only):'제목으로 거르기'}</button>
-</div><button class="sbtn" data-off="${k}">${c.off?'켜기':'끄기'}</button><button class="sbtn r" data-del="${k}">빼기</button></div>`).join(''):'<div class="note">아직 채널이 없어요</div>'}
+</div><button class="sbtn" data-who="${k}">👀 ${c.who?esc(c.who.split(',').map(p=>S.D.cfg.prof?.[p]?.n||'?').join('·'))+'만':'모두'}</button><button class="sbtn" data-off="${k}">${c.off?'켜기':'끄기'}</button><button class="sbtn r" data-del="${k}">빼기</button></div>`).join(''):'<div class="note">아직 채널이 없어요</div>'}
    <div style="margin-top:12px" class="inrow"><input id="chQ" placeholder="채널 이름 또는 유튜브 주소" enterkeyhint="search"><button class="sbtn p" id="chGo">찾기</button></div>
    <div class="note" style="margin-top:6px">채널 이름으로 찾거나, 유튜브 앱에서 채널 「공유 → 링크 복사」한 주소를 붙여 넣어요. 맥이 영상 목록을 읽어 오는 데 1분쯤 걸려요.</div>
    <div id="chR"></div>
@@ -573,6 +573,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
   $('#nsT').onchange=()=>{S.D.cfg.noShorts=!$('#nsT').checked;put('cfg/noShorts',S.D.cfg.noShorts||null)};
   $$('[data-only]').forEach(b=>b.onclick=()=>{const k=b.dataset.only;const c=S.D.ch[k];const v=prompt('제목에 이 낱말이 든 영상만 보여요 (여러 개는 | 로 · 비우면 전부)',c.only||'');if(v===null)return;
     c.only=v.trim()||null;put('ch/'+k+'/only',c.only);const nn=prompt('칩에 보일 이름 (비우면 채널 이름)',c.nn||'');if(nn!==null){c.nn=nn.trim()||null;put('ch/'+k+'/nn',c.nn)}drawAdmin()});
+  $$('[data-who]').forEach(b=>b.onclick=()=>{const k=b.dataset.who;const ops=['',...profs().filter(([,p])=>!p.yt).map(([pk])=>pk)];const i=ops.indexOf(S.D.ch[k].who||'');const v=ops[(i+1)%ops.length];S.D.ch[k].who=v||null;put('ch/'+k+'/who',v||null);drawAdmin()});
   $$('[data-off]').forEach(b=>b.onclick=()=>{const k=b.dataset.off;S.D.ch[k].off=!S.D.ch[k].off;put('ch/'+k+'/off',S.D.ch[k].off||null);drawAdmin()});
   $$('[data-del]').forEach(b=>b.onclick=()=>{const k=b.dataset.del;sheet(`<h3>「${esc(S.D.ch[k].n)}」 채널을 뺄까요?</h3><button class="mi" id="dY" style="color:#e03131">빼기</button><button class="mi" id="dN">취소</button>`);$('#dN').onclick=closeSheet;
     $('#dY').onclick=()=>{put('ch/'+k,null);put('vid/'+k,null);delete S.D.ch[k];delete S.V[k];closeSheet();drawAdmin();toast('뺐어요')}});
