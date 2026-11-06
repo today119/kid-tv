@@ -263,7 +263,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106l';
+const APPVER='20261106m';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -435,7 +435,7 @@ async function playId(o,id,poster){o.vid=id;o.frz=0;o.lastT=-1;o.box.classList.r
 function toggle(o){if(!o.yt)return;if(o.st===1||o.st===3)o.yt.pauseVideo();else{if(checkLimit())return;o.yt.playVideo()}}
 /* 광고 중엔 유튜브 화면을 직접 누를 수 있게(건너뛰기 등) — 광고 동안은 본 영상 시간이 멈춰 있음 */
 setInterval(()=>{for(const k of ['w','s']){const o=P[k];if(!o||!o.yt||!o.started||!o.yt.getCurrentTime)continue;let t;try{t=o.yt.getCurrentTime()}catch(e){continue}
-  if(o.st===1){if(Math.abs(t-(o.lastT??-1))<0.05)o.frz=(o.frz||0)+1;else{o.frz=0;o.box.classList.remove('ad')}if(o.frz>=3)o.box.classList.add('ad')}o.lastT=t}},500);
+  if(o.st===1&&t-(o.lastT??-1)>0.05&&t>0.3){o.frz=0;o.box.classList.remove('ad')}else if(o.st!==2&&o.st!==0){o.frz=(o.frz||0)+1;if(o.frz>=2)o.box.classList.add('ad')}o.lastT=t}},500);
 function stopAll(){for(const k of ['w','s'])if(P[k]&&P[k].yt&&P[k].yt.pauseVideo)try{P[k].yt.pauseVideo()}catch(e){}}
 
 /* 재생 화면 */
