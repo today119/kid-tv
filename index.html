@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106v';
+const APPVER='20261106w';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -297,7 +297,7 @@ async function loadAll(){
   L.cache={cfg:S.D.cfg,ch:S.D.ch,hide:S.D.hide};saveL()}
 
 /* ── 영상 목록 ── */
-const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off&&(!c.who||c.who.split(',').includes(S.pid))).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
+const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off&&(!c.who||c.who.split(',').includes(S.pid))).sort((a,b)=>(a[1].o??100)-(b[1].o??100)||(a[1].at||0)-(b[1].at||0));
 const onlyRe=c=>{if(!c||(!c.only&&!c.ex))return null;try{const a=c.only?new RegExp(c.only,'i'):null,b=c.ex?new RegExp(c.ex,'i'):null;return {test:t=>(!a||a.test(t))&&(!b||!b.test(t))}}catch(e){return null}};
 /* 쇼츠 끔이면 쇼츠 목록에 있는 영상·#shorts·1분 이하 영상은 일반 목록·재생목록에서도 뺌 */
 let shSet=null,shKey='';function isSh(id,t,d){if(!S.D.cfg.noShorts)return false;const k=Object.keys(S.V).map(c=>c+(S.V[c]?.s?.length||0)).join();if(k!==shKey){shKey=k;shSet=new Set();for(const c in S.V)for(const x of S.V[c]?.s||[])shSet.add(x[0])}
