@@ -263,7 +263,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106n';
+const APPVER='20261106o';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -398,7 +398,7 @@ let tT;function toast(t){$('#toast').textContent=t;$('#toast').classList.add('on
 /* ── 프로필 ── */
 function profs(){return Object.entries(S.D.cfg.prof||{}).sort((a,b)=>(a[1].o||0)-(b[1].o||0))}
 function whoScreen(){const d=document.createElement('div');d.className='who';d.innerHTML=`<h2>누가 볼까요?</h2><div class="ps">${profs().map(([k,p])=>`<button data-p="${k}"><div class="pav" style="background:${esc(p.c||'#888')}">${esc(ini(p))}</div>${esc(p.n)}</button>`).join('')}</div>`;
-  document.body.appendChild(d);d.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{S.pid=b.dataset.p;L.pid=S.pid;saveL();d.remove();await loadAll();markSeen();render();checkLimit()})}
+  document.body.appendChild(d);d.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{if(S.D.cfg.prof[b.dataset.p]?.yt)return ytGate(d,S.D.cfg.prof[b.dataset.p]);S.pid=b.dataset.p;L.pid=S.pid;saveL();d.remove();await loadAll();markSeen();render();checkLimit()})}
 $('#meB').onclick=()=>{const p=prof();sheet(`<div class="mi" style="pointer-events:none"><div class="pav" style="background:${esc(p.c||'#888')}">${esc(ini(p))}</div><div><b>${esc(p.n||'')}</b><div class="sb">${limTxt()}</div></div></div>
   <div style="border-top:1px solid var(--line);margin:6px 0"></div>
   <button class="mi" id="swP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.8-3.5 3.2-5.5 6-5.5s5.2 2 6 5.5M16 6h5m-2-2 2 2-2 2M21 14h-5m2-2-2 2 2 2"/></svg>계정 바꾸기</button>
@@ -519,6 +519,11 @@ setInterval(()=>{if(P.s)$('#swipe').classList.toggle('hide',!P.s.started)},300);
 
 /* ── 비밀번호 ── */
 async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('kidtv:'+S.fam+':'+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,32)}
+/* 어른 프로필: 비밀번호 맞으면 진짜 유튜브로 */
+function ytGate(d,p){const n=p.pl||8;let v='';const draw=msg=>{d.innerHTML=`<h2>${esc(p.n)} 비밀번호</h2><div class="pin"><div class="ds">${Array.from({length:n},(_,i)=>`<i class="${i<v.length?'f':''}"></i>`).join('')}</div><div class="msg">${msg||''}</div><div class="kp">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<button data-k="${k}" ${k===''?'style="visibility:hidden"':''}>${k}</button>`).join('')}</div></div><button class="sbtn" id="ygX">돌아가기</button>`;
+  d.querySelector('#ygX').onclick=()=>{d.remove();whoScreen()};
+  d.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{const k=b.dataset.k;if(k==='⌫'){v=v.slice(0,-1);return draw()}v+=k;if(v.length<n)return draw();
+    if(await hash('yt:'+v)===p.pw){stopAll();location.href='https://m.youtube.com/'}else{v='';draw('비밀번호가 달라요')}})};draw()}
 function pinGate(ok){if(now()<S.adminUntil)return ok();const setting=!S.D.cfg.pin;let first='',v='';
   const draw=(msg)=>{sheet(`<h3 style="text-align:center">${setting?(first?'한 번 더 눌러 주세요':'부모 비밀번호 정하기 (숫자 4개)'):'부모 비밀번호'}</h3><div class="pin"><div class="ds">${[0,1,2,3].map(i=>`<i class="${i<v.length?'f':''}"></i>`).join('')}</div><div class="msg">${msg||''}</div><div class="kp">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<button data-k="${k}" ${k===''?'style="visibility:hidden"':''}>${k}</button>`).join('')}</div></div>`);
     $$('#sheet [data-k]').forEach(b=>b.onclick=async()=>{const k=b.dataset.k;if(k==='⌫'){v=v.slice(0,-1);return draw()}v+=k;if(v.length<4)return draw();
