@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106w';
+const APPVER='20261106x';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -341,7 +341,7 @@ function render(){
   const chs=chOn();$('#chips').classList.toggle('hide',S.tab!=='home');
   const hasPl=chs.some(([k,c])=>!c.only&&(S.V[k]?.p||[]).length);
   const langs=[...new Set(chs.map(([k,c])=>c.lang).filter(Boolean))];
-  if(S.tab==='home')$('#chips').innerHTML=(langs.length>1?[['L:ko','🇰🇷 한국어'],['L:en','🇺🇸 영어']].map(([k,n])=>`<button class="chip ${S.lang===k.slice(2)?'on':''}" data-c="${k}" style="${S.lang===k.slice(2)?'background:#065fd4;color:#fff':''}">${n}</button>`).join('')+'<span style="flex:none;width:1px;background:var(--line);margin:4px 2px"></span>':'')+[['all','전체'],...topics().map(t=>['t:'+t.n,(t.e?t.e+' ':'')+t.n]),['new','최신'],...(hasPl?[['pls','📋 재생목록']]:[]),...chips4ch(chs)].map(([k,n])=>`<button class="chip ${S.chip===k?'on':''}" data-c="${esc(k)}">${esc(n)}</button>`).join('');
+  if(S.tab==='home')$('#chips').innerHTML=(langs.length>1?[['L:ko','🇰🇷 한국어'],['L:en','🇺🇸 영어']].map(([k,n])=>`<button class="chip ${S.lang===k.slice(2)?'on':''}" data-c="${k}" style="${S.lang===k.slice(2)?'background:#065fd4;color:#fff':''}">${n}</button>`).join('')+'<span style="flex:none;width:1px;background:var(--line);margin:4px 2px"></span>':'')+[['all','전체'],...chips4ch(chs.filter(([,c])=>(c.o??100)<100)),...topics().map(t=>['t:'+t.n,(t.e?t.e+' ':'')+t.n]),['new','최신'],...(hasPl?[['pls','📋 재생목록']]:[]),...chips4ch(chs.filter(([,c])=>(c.o??100)>=100))].map(([k,n])=>`<button class="chip ${S.chip===k?'on':''}" data-c="${esc(k)}">${esc(n)}</button>`).join('');
   const on=$$('#chips .chip.on').filter(e=>!e.dataset.c.startsWith('L:'))[0];if(on&&on.dataset.c!=='all')on.scrollIntoView({inline:'center',block:'nearest'});
   $$('#chips [data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c.startsWith('L:')){const l=c.slice(2);S.lang=S.lang===l?'':l;L.lang=S.lang;saveL();S.shown=0;render();return}if(c==='pls'){go({tab:'pls'});return}if(c.startsWith('c:')){go({tab:'ch',cid:c.slice(2),ctab:'v'});return}S.chip=c;S.shown=0;render();scrollTo(0,0)});
   const m=$('#m');
