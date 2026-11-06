@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106q';
+const APPVER='20261106r';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -561,7 +561,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
    <div class="note" style="margin-top:6px">${topics().map(t=>esc((t.e||'')+t.n)+' '+allVids().filter(v=>inTopic(v,t.n)).length).join(' · ')||'아직 안 나눴어요'}</div></div>
   <div class="box"><h4>👧 보는 사람 · 하루 시간</h4>
    ${profs().map(([k,p])=>{const u=Math.floor((+lg[k]||0)/60);return `<div class="crow" style="display:block"><div style="display:flex;align-items:center;gap:10px"><div class="pav" style="width:36px;height:36px;background:${esc(p.c)}">${esc(ini(p))}</div><b style="flex:1">${esc(p.n)}</b><span class="note">오늘 ${u}분${lg[k+'_x']?` (+${lg[k+'_x']}분 더 줌)`:''}</span><button class="sbtn" data-rn="${k}">이름</button>${profs().length>1?`<button class="sbtn r" data-pd="${k}">빼기</button>`:''}</div>
-     <div class="lim">${[0,30,45,60,90,120].map(n=>`<button class="${(+p.lim||0)===n?'on':''}" data-lim="${k}:${n}">${n?n+'분':'제한 없음'}</button>`).join('')}<button class="${p.tl?'on':''}" data-tl="${k}">${p.tl?'🔒 터치 잠금':'터치 잠금 끔'}</button></div></div>`}).join('')}
+     <div class="lim">${[0,30,45,60,90,120].map(n=>`<button class="${(+p.lim||0)===n?'on':''}" data-lim="${k}:${n}">${n?n+'분':'제한 없음'}</button>`).join('')}<button class="${[0,30,45,60,90,120].includes(+p.lim||0)?'':'on'}" data-limc="${k}">${[0,30,45,60,90,120].includes(+p.lim||0)?'✏️ 직접 정하기':'✏️ '+p.lim+'분'}</button><button class="${p.tl?'on':''}" data-tl="${k}">${p.tl?'🔒 터치 잠금':'터치 잠금 끔'}</button></div></div>`}).join('')}
    <div style="margin-top:10px"><button class="sbtn" id="pAdd">＋ 보는 사람 더하기</button></div></div>
   <div class="box"><h4>🚫 숨긴 영상 ${hidden.length}개</h4><div class="note">영상 화면에서 부모 설정을 연 뒤 10분 동안 「이 영상 숨기기」 버튼이 보여요.</div>
    ${hidden.map(v=>`<div class="crow"><img src="${thU(v.id)}" style="width:80px;aspect-ratio:16/9;object-fit:cover;border-radius:6px" alt=""><div class="tx"><b>${esc(v.t)}</b></div><button class="sbtn" data-uh="${esc(v.id)}">다시 보이기</button></div>`).join('')}</div>
@@ -584,6 +584,7 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
   $('#chGo').onclick=go;$('#chQ').onkeydown=e=>{if(e.key==='Enter')go()};
   $('#rfB').onclick=async()=>{toast('새 영상을 불러오는 중… 1~2분 걸려요');await waitReq(ask('refresh'));setTimeout(async()=>{await loadAll();drawAdmin();toast('새로 불러왔어요')},60000)};
   $$('[data-tl]').forEach(b=>b.onclick=()=>{const k=b.dataset.tl;const v=S.D.cfg.prof[k].tl?null:1;S.D.cfg.prof[k].tl=v;put('cfg/prof/'+k+'/tl',v);drawAdmin()});
+  $$('[data-limc]').forEach(b=>b.onclick=()=>{const k=b.dataset.limc;const a=prompt('하루에 몇 분 볼까요? (숫자만, 예: 40)',S.D.cfg.prof[k].lim||'');if(a===null)return;const n=Math.round(+String(a).replace(/[^0-9.]/g,''));if(!(n>0&&n<=600))return toast('1~600 사이 숫자로 적어 주세요');S.D.cfg.prof[k].lim=n;put('cfg/prof/'+k+'/lim',n);drawAdmin();toast(S.D.cfg.prof[k].n+' 하루 '+n+'분으로 정했어요')});
   $$('[data-lim]').forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.lim.split(':');S.D.cfg.prof[k].lim=+n;put('cfg/prof/'+k+'/lim',+n);drawAdmin()});
   $$('[data-rn]').forEach(b=>b.onclick=()=>{const k=b.dataset.rn;const n=prompt('이름',S.D.cfg.prof[k].n);if(n&&n.trim()){S.D.cfg.prof[k].n=n.trim();put('cfg/prof/'+k+'/n',n.trim());drawAdmin()}});
   $$('[data-pd]').forEach(b=>b.onclick=()=>{const k=b.dataset.pd;delete S.D.cfg.prof[k];put('cfg/prof/'+k,null);if(S.pid===k){S.pid='';L.pid='';saveL()}drawAdmin()});
