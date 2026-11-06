@@ -79,6 +79,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 .ov{position:absolute;inset:0;z-index:4;display:none}
 .pbox.lock .ov{display:block}
 .pbox:not(.lock) .ctl,.pbox:not(.lock) .poster{display:none!important}
+.pbox.ad iframe{pointer-events:auto}.pbox.ad .ov,.pbox.ad .ctl,.pbox.ad .poster{display:none!important}
 .poster{position:absolute;inset:0;z-index:5;background:#000 center/cover no-repeat;display:none}
 .pbox.paused .poster,.pbox.ended .poster{display:block}
 .ctl{position:absolute;inset:0;z-index:6;background:#0006;opacity:0;transition:opacity .2s;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:12%}
@@ -262,7 +263,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106k';
+const APPVER='20261106l';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -429,9 +430,12 @@ function makePlayer(key,elId,box,opts){
 function stUI(o){const b=o.box;b.classList.toggle('paused',o.started&&o.st===2);b.classList.toggle('ended',o.st===0&&!!o.endShown);
   const sp=b.querySelector('.spin');if(sp)sp.classList.toggle('hide',!(o.st===3||(o.st===-1&&o.loading)));
   const pp=b.querySelector('.cb.big');if(pp)pp.innerHTML=o.st===1||o.st===3?ICO.pause:o.st===0?ICO.replay:ICO.play}
-async function playId(o,id,poster){o.vid=id;o.endShown=false;o.loading=true;o.box.querySelector('.poster').style.backgroundImage=`url(${poster})`;o.box.classList.remove('ended','paused');await o.ready;
+async function playId(o,id,poster){o.vid=id;o.frz=0;o.lastT=-1;o.box.classList.remove('ad');o.endShown=false;o.loading=true;o.box.querySelector('.poster').style.backgroundImage=`url(${poster})`;o.box.classList.remove('ended','paused');await o.ready;
   o.yt.loadVideoById({videoId:id,startSeconds:0});o.loading=false;stUI(o)}
 function toggle(o){if(!o.yt)return;if(o.st===1||o.st===3)o.yt.pauseVideo();else{if(checkLimit())return;o.yt.playVideo()}}
+/* 광고 중엔 유튜브 화면을 직접 누를 수 있게(건너뛰기 등) — 광고 동안은 본 영상 시간이 멈춰 있음 */
+setInterval(()=>{for(const k of ['w','s']){const o=P[k];if(!o||!o.yt||!o.started||!o.yt.getCurrentTime)continue;let t;try{t=o.yt.getCurrentTime()}catch(e){continue}
+  if(o.st===1){if(Math.abs(t-(o.lastT??-1))<0.05)o.frz=(o.frz||0)+1;else{o.frz=0;o.box.classList.remove('ad')}if(o.frz>=3)o.box.classList.add('ad')}o.lastT=t}},500);
 function stopAll(){for(const k of ['w','s'])if(P[k]&&P[k].yt&&P[k].yt.pauseVideo)try{P[k].yt.pauseVideo()}catch(e){}}
 
 /* 재생 화면 */
