@@ -262,7 +262,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106j';
+const APPVER='20261106k';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -423,7 +423,7 @@ function loadYT(){if(ytReady)return ytReady;ytReady=new Promise(ok=>{window.onYo
 const ICO={play:'<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',pause:'<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',replay:'<svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>'};
 function makePlayer(key,elId,box,opts){
   const o={key,box,st:-1,started:false,vid:'',ended:opts.ended,ready:null,yt:null};
-  o.ready=loadYT().then(()=>new Promise(ok=>{o.yt=new YT.Player(elId,{host:'https://www.youtube-nocookie.com',playerVars:{controls:0,rel:0,playsinline:1,iv_load_policy:3,disablekb:1,fs:0,modestbranding:1,cc_load_policy:0,hl:'ko',loop:0},
+  o.ready=loadYT().then(()=>new Promise(ok=>{o.yt=new YT.Player(elId,{host:'https://www.youtube.com',playerVars:{controls:0,rel:0,playsinline:1,iv_load_policy:3,disablekb:1,fs:0,modestbranding:1,cc_load_policy:0,hl:'ko',loop:0},
     events:{onReady:()=>ok(),onStateChange:e=>{o.st=e.data;stUI(o);if(e.data===1&&!o.started){o.started=true;box.classList.add('lock')}if(e.data===0)o.ended&&o.ended()},onError:()=>{toast('이 영상은 재생할 수 없어요');o.ended&&o.ended(true)}}})}));
   return o}
 function stUI(o){const b=o.box;b.classList.toggle('paused',o.started&&o.st===2);b.classList.toggle('ended',o.st===0&&!!o.endShown);
