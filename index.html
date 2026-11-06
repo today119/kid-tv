@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106t';
+const APPVER='20261106u';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -299,14 +299,17 @@ async function loadAll(){
 /* ── 영상 목록 ── */
 const chOn=()=>Object.entries(S.D.ch).filter(([k,c])=>c&&!c.off&&(!c.who||c.who.split(',').includes(S.pid))).sort((a,b)=>(a[1].at||0)-(b[1].at||0));
 const onlyRe=c=>{if(!c||(!c.only&&!c.ex))return null;try{const a=c.only?new RegExp(c.only,'i'):null,b=c.ex?new RegExp(c.ex,'i'):null;return {test:t=>(!a||a.test(t))&&(!b||!b.test(t))}}catch(e){return null}};
-function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
+/* 쇼츠 끔이면 쇼츠 목록에 있는 영상·#shorts·1분 이하 영상은 일반 목록·재생목록에서도 뺌 */
+let shSet=null,shKey='';function isSh(id,t,d){if(!S.D.cfg.noShorts)return false;const k=Object.keys(S.V).map(c=>c+(S.V[c]?.s?.length||0)).join();if(k!==shKey){shKey=k;shSet=new Set();for(const c in S.V)for(const x of S.V[c]?.s||[])shSet.add(x[0])}
+  return shSet.has(id)||/#shorts?\b/i.test(t||'')||(d>0&&d<=60)}
+function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
 function allShorts(){if(S.D.cfg.noShorts)return [];const out=[];for(const [cid,c] of chOn()){if(c.noS)continue;(S.V[cid]?.s||[]).forEach((x,i)=>{if(!S.D.hide[x[0]])out.push({id:x[0],t:x[1],vw:x[2],c:cid,i,s:1})})}return out}
 function findVid(id){for(const [cid] of Object.entries(S.D.ch)){const a=S.V[cid];if(!a)continue;let x=a.v.find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],vw:x[3],c:cid};x=a.s.find(y=>y[0]===id);if(x)return{id,t:x[1],vw:x[2],c:cid,s:1}}
   for(const [cid] of Object.entries(S.D.ch)){for(const pl of S.V[cid]?.p||[]){const x=pl[2].find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],c:cid}}}return null}
 const plOf=(cid,pi)=>(S.V[cid]?.p||[])[pi];
 /* 「S5 E16」처럼 편 번호가 붙은 목록은 1편부터 차례대로 */
 const epNo=t=>{const m=/S\s*(\d+)\s*E\s*(\d+)/i.exec(t)||/시즌\s*(\d+)\D{0,6}(\d+)\s*(?:편|화)/.exec(t);return m?(+m[1])*1000+(+m[2]):null};
-function plItems(pl){if(!pl)return [];const a=pl[2].filter(x=>!S.D.hide[x[0]]).map(x=>({id:x[0],t:x[1],d:x[2],ep:epNo(x[1])}));
+function plItems(pl){if(!pl)return [];const a=pl[2].filter(x=>!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])).map(x=>({id:x[0],t:x[1],d:x[2],ep:epNo(x[1])}));
   const n=a.filter(x=>x.ep!==null).length;if(n>=a.length*.6)a.sort((x,y)=>(x.ep??1e9)-(y.ep??1e9));return a}
 const plRank=t=>/전체\s*에피소드|시즌|에피소드/.test(t)?0:1;
 function seeded(arr,seed){let s=seed;const r=()=>(s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff;const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
