@@ -263,7 +263,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106o';
+const APPVER='20261106p';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -378,7 +378,7 @@ function bindCards(el){el.querySelectorAll('[data-v]').forEach(c=>c.onclick=()=>
   el.querySelectorAll('[data-s]').forEach(c=>c.onclick=()=>openShorts(c.dataset.s))}
 const prof=()=>S.D.cfg.prof?.[S.pid]||{};
 /* 동그라미 글자: 첫 글자가 겹치면(연아·연우) 끝 글자로 */
-function ini(p){const n=(p&&p.n)||'?';const same=Object.values(S.D.cfg.prof||{}).filter(q=>q&&q.n&&q.n[0]===n[0]).length>1;return same?n.slice(-1):n[0]}
+function ini(p){if(p&&p.i)return p.i;const n=(p&&p.n)||'?';const same=Object.values(S.D.cfg.prof||{}).filter(q=>q&&q.n&&q.n[0]===n[0]).length>1;return same?n.slice(-1):n[0]}
 function meBtn(){const p=prof();$('#meB').innerHTML=`<div class="pav" style="background:${esc(p.c||'#888')}">${esc(ini(p))}</div>`}
 /* 알림 = 마지막으로 연 뒤 새로 올라온 영상 */
 function newOnes(){const seen=L.seen?.[S.pid]||{};const out=[];for(const [cid] of chOn()){const top=S.V[cid]?.v||[];const s=seen[cid];if(!s){continue}const i=top.findIndex(x=>x[0]===s);top.slice(0,i<0?5:i).forEach(x=>out.push(findVid(x[0])))}return out.filter(Boolean)}
