@@ -268,7 +268,7 @@ main{padding-bottom:calc(60px + var(--sab))}
 <div class="toast" id="toast"></div>
 
 <script>
-const APPVER='20261106u';
+const APPVER='20261106v';
 const DB='https://matchmaker-28187-default-rtdb.asia-southeast1.firebasedatabase.app/';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -302,14 +302,16 @@ const onlyRe=c=>{if(!c||(!c.only&&!c.ex))return null;try{const a=c.only?new RegE
 /* 쇼츠 끔이면 쇼츠 목록에 있는 영상·#shorts·1분 이하 영상은 일반 목록·재생목록에서도 뺌 */
 let shSet=null,shKey='';function isSh(id,t,d){if(!S.D.cfg.noShorts)return false;const k=Object.keys(S.V).map(c=>c+(S.V[c]?.s?.length||0)).join();if(k!==shKey){shKey=k;shSet=new Set();for(const c in S.V)for(const x of S.V[c]?.s||[])shSet.add(x[0])}
   return shSet.has(id)||/#shorts?\b/i.test(t||'')||(d>0&&d<=60)}
-function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
+/* 기간 제한: cfg.maxAge 년보다 오래된 영상은 뺌(날짜 모르면 둠), 채널 noAge 면 예외 */
+function isOld(cid,day){const y=+S.D.cfg.maxAge;if(!y||!day||S.D.ch[cid]?.noAge)return false;return day<Date.now()/864e5-y*365}
+function allVids(){const out=[];for(const [cid,c] of chOn()){if(S.lang&&c.lang&&c.lang!==S.lang)continue;const re=onlyRe(c);(S.V[cid]?.v||[]).forEach((x,i)=>{if(!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])&&!isOld(cid,x[4])&&(!re||re.test(x[1])))out.push({id:x[0],t:x[1],d:x[2],vw:x[3],c:cid,i})})}return out}
 function allShorts(){if(S.D.cfg.noShorts)return [];const out=[];for(const [cid,c] of chOn()){if(c.noS)continue;(S.V[cid]?.s||[]).forEach((x,i)=>{if(!S.D.hide[x[0]])out.push({id:x[0],t:x[1],vw:x[2],c:cid,i,s:1})})}return out}
 function findVid(id){for(const [cid] of Object.entries(S.D.ch)){const a=S.V[cid];if(!a)continue;let x=a.v.find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],vw:x[3],c:cid};x=a.s.find(y=>y[0]===id);if(x)return{id,t:x[1],vw:x[2],c:cid,s:1}}
   for(const [cid] of Object.entries(S.D.ch)){for(const pl of S.V[cid]?.p||[]){const x=pl[2].find(y=>y[0]===id);if(x)return{id,t:x[1],d:x[2],c:cid}}}return null}
 const plOf=(cid,pi)=>(S.V[cid]?.p||[])[pi];
 /* 「S5 E16」처럼 편 번호가 붙은 목록은 1편부터 차례대로 */
 const epNo=t=>{const m=/S\s*(\d+)\s*E\s*(\d+)/i.exec(t)||/시즌\s*(\d+)\D{0,6}(\d+)\s*(?:편|화)/.exec(t);return m?(+m[1])*1000+(+m[2]):null};
-function plItems(pl){if(!pl)return [];const a=pl[2].filter(x=>!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])).map(x=>({id:x[0],t:x[1],d:x[2],ep:epNo(x[1])}));
+function plItems(pl){if(!pl)return [];const pc=Object.keys(S.V).find(c=>S.V[c]?.p?.includes(pl));const a=pl[2].filter(x=>!S.D.hide[x[0]]&&!isSh(x[0],x[1],x[2])&&!isOld(pc,x[3])).map(x=>({id:x[0],t:x[1],d:x[2],ep:epNo(x[1])}));
   const n=a.filter(x=>x.ep!==null).length;if(n>=a.length*.6)a.sort((x,y)=>(x.ep??1e9)-(y.ep??1e9));return a}
 const plRank=t=>/전체\s*에피소드|시즌|에피소드/.test(t)?0:1;
 function seeded(arr,seed){let s=seed;const r=()=>(s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff;const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -553,10 +555,11 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
   <div class="box"><h4>📺 볼 수 있는 채널</h4>
    ${chs.length?chs.map(([k,c])=>`<div class="crow"><img class="av" src="${esc(avU(c.av))}" alt=""><div class="tx"><b>${esc(c.n)}</b><span class="note">영상 ${c.only?allVids().filter(v=>v.c===k).length+'/':''}${c.nv||0}${c.off?' · 잠시 끔':''}${c.nn?' · 「'+esc(c.nn)+'」':''}</span>
      <button class="sbtn" style="margin-top:4px;padding:4px 10px;font-size:12px" data-only="${k}">🔎 ${c.only?'거름: '+esc(c.only):'제목으로 거르기'}</button>
-</div><button class="sbtn" data-who="${k}">👀 ${c.who?esc(c.who.split(',').map(p=>S.D.cfg.prof?.[p]?.n||'?').join('·'))+'만':'모두'}</button><button class="sbtn" data-off="${k}">${c.off?'켜기':'끄기'}</button><button class="sbtn r" data-del="${k}">빼기</button></div>`).join(''):'<div class="note">아직 채널이 없어요</div>'}
+</div><button class="sbtn" data-noage="${k}">${c.noAge?'📅 옛 영상도':'📅 기간 적용'}</button><button class="sbtn" data-who="${k}">👀 ${c.who?esc(c.who.split(',').map(p=>S.D.cfg.prof?.[p]?.n||'?').join('·'))+'만':'모두'}</button><button class="sbtn" data-off="${k}">${c.off?'켜기':'끄기'}</button><button class="sbtn r" data-del="${k}">빼기</button></div>`).join(''):'<div class="note">아직 채널이 없어요</div>'}
    <div style="margin-top:12px" class="inrow"><input id="chQ" placeholder="채널 이름 또는 유튜브 주소" enterkeyhint="search"><button class="sbtn p" id="chGo">찾기</button></div>
    <div class="note" style="margin-top:6px">채널 이름으로 찾거나, 유튜브 앱에서 채널 「공유 → 링크 복사」한 주소를 붙여 넣어요. 맥이 영상 목록을 읽어 오는 데 1분쯤 걸려요.</div>
    <div id="chR"></div>
+   <div class="note" style="margin-top:12px">📅 언제 올린 영상까지 볼까요?</div><div class="lim">${[[1,'최근 1년'],[2,'최근 2년'],[0,'전부']].map(([n,l])=>`<button class="${(+S.D.cfg.maxAge||0)===n?'on':''}" data-age="${n}">${l}</button>`).join('')}</div>
    <label class="tog" style="margin-top:12px;font-size:14px;color:var(--fg)"><input type="checkbox" id="nsT" ${S.D.cfg.noShorts?'':'checked'}> 쇼츠(짧은 세로 영상)도 보기</label>
    <div style="margin-top:10px"><button class="sbtn" id="rfB">🔄 새 영상 지금 불러오기</button></div></div>
   <div class="box"><h4>📚 학습 주제</h4><div class="note">홈 맨 위 칩이에요. 맥이 영상 제목·설명을 보고 이 주제로 나눠요. 쉼표로 적고 「다시 나누기」를 누르면 몇 분 뒤 바뀌어요.</div>
@@ -573,9 +576,11 @@ function drawAdmin(){const chs=Object.entries(S.D.ch).sort((a,b)=>(a[1].at||0)-(
   <div class="box"><h4>🔒 비밀번호</h4><button class="sbtn" id="pinC">비밀번호 바꾸기</button><div class="note" style="margin-top:8px">v${APPVER}</div></div>`;
   $('#tpGo').onclick=()=>{const h=$('#tpH').value.trim();S.D.cfg.tpHint=h;put('cfg/tpHint',h||null);ask('retopic');toast('다시 나누는 중이에요. 5~10분 뒤 앱을 다시 열어 주세요')};
   $('#admX').onclick=()=>{$('#adm').classList.remove('on');render()};
+  $$('[data-age]').forEach(b=>b.onclick=()=>{const n=+b.dataset.age;S.D.cfg.maxAge=n||null;put('cfg/maxAge',n||null);drawAdmin()});
   $('#nsT').onchange=()=>{S.D.cfg.noShorts=!$('#nsT').checked;put('cfg/noShorts',S.D.cfg.noShorts||null)};
   $$('[data-only]').forEach(b=>b.onclick=()=>{const k=b.dataset.only;const c=S.D.ch[k];const v=prompt('제목에 이 낱말이 든 영상만 보여요 (여러 개는 | 로 · 비우면 전부)',c.only||'');if(v===null)return;
     c.only=v.trim()||null;put('ch/'+k+'/only',c.only);const nn=prompt('칩에 보일 이름 (비우면 채널 이름)',c.nn||'');if(nn!==null){c.nn=nn.trim()||null;put('ch/'+k+'/nn',c.nn)}drawAdmin()});
+  $$('[data-noage]').forEach(b=>b.onclick=()=>{const k=b.dataset.noage;S.D.ch[k].noAge=S.D.ch[k].noAge?null:1;put('ch/'+k+'/noAge',S.D.ch[k].noAge);drawAdmin()});
   $$('[data-who]').forEach(b=>b.onclick=()=>{const k=b.dataset.who;const ops=['',...profs().filter(([,p])=>!p.yt).map(([pk])=>pk)];const i=ops.indexOf(S.D.ch[k].who||'');const v=ops[(i+1)%ops.length];S.D.ch[k].who=v||null;put('ch/'+k+'/who',v||null);drawAdmin()});
   $$('[data-off]').forEach(b=>b.onclick=()=>{const k=b.dataset.off;S.D.ch[k].off=!S.D.ch[k].off;put('ch/'+k+'/off',S.D.ch[k].off||null);drawAdmin()});
   $$('[data-del]').forEach(b=>b.onclick=()=>{const k=b.dataset.del;sheet(`<h3>「${esc(S.D.ch[k].n)}」 채널을 뺄까요?</h3><button class="mi" id="dY" style="color:#e03131">빼기</button><button class="mi" id="dN">취소</button>`);$('#dN').onclick=closeSheet;
